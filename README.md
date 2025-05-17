@@ -18,9 +18,9 @@ bash <(curl -Ls https://raw.githubusercontent.com/eooce/scripts/master/test.sh)
 PORT,NEZHA_SERVER,NEZHA_PORT,NEZHA_KEY can be customized
 
 ## Hysteria2
-The HY2_PORT can be customized,Removing HY2_PORT=8880 it will use a random port
+HY2_PORT 可以自定义，删除 HY2_PORT=8880 会使用随机端口
 ```
-HY2_PORT=8880 bash <(curl -Ls https://raw.githubusercontent.com/eooce/scripts/master/Hysteria2.sh)
+HY2_PORT=8880 bash <(curl -Ls https://raw.githubusercontent.com/lym377/scripts/refs/heads/master/Hysteria2.sh)
 ```
 
 ## Tuic-v5
