@@ -3,7 +3,7 @@ This is a reality no interaction one-click script，only support Debian10+/Ubunt
 
 # Install
 ## Reality
-Run the following command. The PORT can be customized,Removing PORT=8880 it will use a random port
+运行以下命令。PORT 可以自定义，删除 PORT=8880 后将使用随机端口
 ```
 PORT=8880 bash <(curl -Ls https://raw.githubusercontent.com/eooce/scripts/master/reality.sh)
 ```
