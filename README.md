@@ -59,7 +59,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/eooce/scripts/master/agent.sh)
 ## Frp 一键配置ssh转发，安装服务端和客户端
 可选环境变量 FRP_VERSION FRP_DIR SSH_PORT
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/eooce/scripts/master/frp.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/lym377/scripts/refs/heads/master/frp.sh)
 ```
 
 
