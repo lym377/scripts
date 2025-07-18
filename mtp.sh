@@ -7,11 +7,10 @@ purple() { echo -e "\e[1;35m$1\033[0m"; }
 HOSTNAME=$(hostname)
 USERNAME=$(whoami | tr '[:upper:]' '[:lower:]')
 export SECRET=${SECRET:-$(echo -n "$USERNAME+$HOSTNAME" | md5sum | head -c 32)}
-WORKDIR="${HOME}/mtp" && mkdir -p "$WORKDIR"
-pgrep -x mtp > /dev/null && pkill -9 mtp >/dev/null 2>&1
+WORKDIR="$HOME/mtp" && mkdir -p "$WORKDIR"
+pgrep -x mtg > /dev/null && pkill -9 mtg >/dev/null 2>&1
 
 check_port () {
-  purple "正在安装中,请稍等..."
   port_list=$(devil port list)
   tcp_ports=$(echo "$port_list" | grep -c "tcp")
   udp_ports=$(echo "$port_list" | grep -c "udp")
@@ -104,7 +103,52 @@ nohup ./mtg run -b 0.0.0.0:$MTP_PORT $SECRET --stats-bind=127.0.0.1:$MTP_PORT >/
 EOF
 }
 
-check_port
-get_ip
-download_run
-generate_info
+download_mtg(){
+cmd=$(uname -m)
+if [ "$cmd" == "x86_64" ] || [ "$cmd" == "amd64" ] ; then
+    arch="amd64"
+elif [ "$cmd" == "386" ]; then
+    arch="386"
+elif [ "$cmd" == "arm" ]; then
+    arch="arm"
+elif [ "$cmd" == "aarch64" ]; then
+    arch="arm64"    
+else
+    arch="amd64"
+fi
+
+wget -q -O "${WORKDIR}/mtg" "https://github.com/whunt1/onekeymakemtg/raw/master/builds/ccbuilds/mtg-linux-$arch"
+
+export PORT=${PORT:-$(shuf -i 200-1000 -n 1)}
+export MTP_PORT=$(($PORT + 1)) 
+
+if [ -e "${WORKDIR}/mtg" ]; then
+    cd ${WORKDIR} && chmod +x mtg
+    nohup ./mtg run -b 0.0.0.0:$PORT $SECRET --stats-bind=127.0.0.1:$MTP_PORT >/dev/null 2>&1 &
+fi
+}
+
+show_link(){
+    ip=$(curl -s ip.sb)
+    purple "\nTG分享链接(如获取的是ipv6,可自行将ipv6换成ipv4):\n"
+    LINKS="tg://proxy?server=$ip&port=$PORT&secret=$SECRET"
+    green "$LINKS\n"
+    echo -e "$LINKS" > $WORKDIR/link.txt
+
+    purple "\n一键卸载命令: rm -rf mtp && pkill mtg"
+}
+
+install(){
+purple "正在安装中,请稍等...\n"
+if [[ "$HOSTNAME" =~ serv00.com|ct8.pl|useruno.com ]]; then
+    check_port
+    get_ip
+    download_run
+    generate_info
+else
+    download_mtg
+    show_link
+fi
+}
+
+install
