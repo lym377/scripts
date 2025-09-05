@@ -40,9 +40,31 @@ Install_dependencies
 # 获取IP地址
 getIP() {
     local serverIP
-    serverIP=$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')
+    serverIP=$(curl -s --max-time 3 ipv4.ip.sb 2>/dev/null)
     if [[ -z "${serverIP}" ]]; then
-        serverIP=$(curl -s --max-time 1 ipv6.ip.sb)
+        serverIP=$(curl -s --max-time 3 ipv6.ip.sb 2>/dev/null)
+        if [[ -n "${serverIP}" ]]; then
+            serverIP="[${serverIP}]"
+        fi
+    fi
+    
+    # 如果外部服务都获取失败，尝试从网卡获取
+    if [[ -z "${serverIP}" ]]; then
+        serverIP=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \K\S+' | head -1)
+        if [[ -z "${serverIP}" ]]; then
+            serverIP=$(ip -6 route get 2001:4860:4860::8888 2>/dev/null | grep -oP 'src \K\S+' | head -1)
+            if [[ -n "${serverIP}" ]]; then
+                serverIP="[${serverIP}]"
+            fi
+        fi
+        
+        if [[ -z "${serverIP}" ]]; then
+            serverIP=$(ifconfig 2>/dev/null | grep -oP 'inet \K[0-9.]+' | grep -v '127.0.0.1' | head -1)
+            
+            if [[ -z "${serverIP}" ]]; then
+                serverIP=$(hostname -I 2>/dev/null | awk '{print $1}')
+            fi
+        fi
     fi
     echo "${serverIP}"
 }
@@ -53,8 +75,8 @@ bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release
 # 配置Xray
 reconfig() {
     reX25519Key=$(/usr/local/bin/xray x25519)
-    rePrivateKey=$(echo "${reX25519Key}" | head -1 | awk '{print $3}')
-    rePublicKey=$(echo "${reX25519Key}" | tail -n 1 | awk '{print $3}')
+    rePrivateKey=$(echo "${reX25519Key}" | grep "PrivateKey:" | awk '{print $2}')
+    rePublicKey=$(echo "${reX25519Key}" | grep "Password:" | awk '{print $2}')
     shortId=$(openssl rand -hex 8)
 
     cat >/usr/local/etc/xray/config.json <<EOF
@@ -80,7 +102,7 @@ reconfig() {
                     "dest": "1.1.1.1:443",
                     "xver": 0,
                     "serverNames": [
-                        "www.apple.com"
+                        "www.nazhumi.com"
                     ],
                     "privateKey": "$rePrivateKey",
                     "minClientVer": "",
@@ -114,8 +136,8 @@ EOF
 
     # 删除运行脚本
     rm -f tcp-wss.sh install-release.sh reality.sh 
-
-    url="vless://${UUID}@$(getIP):${PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.apple.com&fp=chrome&pbk=${rePublicKey}&sid=${shortId}&type=tcp&headerType=none#$ISP"
+    IP=$(getIP)
+    url="vless://${UUID}@${IP}:${PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.nazhumi.com&fp=chrome&pbk=${rePublicKey}&sid=${shortId}&type=tcp&headerType=none#$ISP"
 
     echo ""
     echo -e "\e[1;32mreality 安装成功\033[0m"
